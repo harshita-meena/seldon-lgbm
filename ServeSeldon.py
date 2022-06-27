@@ -4,14 +4,17 @@ import time
 from typing import Dict, Iterable, List, Union
 
 import numpy as np
+import logging
 from seldon_core.user_model import SeldonComponent
 from seldon_core.proto import prediction_pb2
 from seldon_core.utils import construct_response_json, get_meta_from_proto
+from opentracing_instrumentation.request_context import get_current_span, span_in_context
 from google.protobuf import json_format
 
 # Dynamically import class name
 class_name = os.environ.get("MODEL_NAME", "Dummy")
 ApplicationLogic = getattr(importlib.import_module(class_name), class_name)
+logger = logging.getLogger(__name__)
 
 
 class ServeSeldon(ApplicationLogic, SeldonComponent):
@@ -46,7 +49,9 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
 
         t0 = time.time()
         # Call predict from super class (ie. Application Logic layer )
-        output = super().predict_raw(msg)
+        with self.tracing.tracer.start_span('Calling-mymodel', child_of=get_current_span()) as span:
+           with span_in_context(span):
+              output = super().predict_raw(msg)
         self.request_duration_ms = (time.time() - t0) * 1000
 
         if is_proto:
@@ -84,3 +89,7 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
 
     def init_metadata(self) -> Dict:
         return self.metadata()
+
+    def set_tracer(self, tracing) -> Dict:
+       self.tracing = tracing
+       logger.info("Tracing object init inside ServeSeldon.")

@@ -65,5 +65,5 @@ class MyModel:
             "platform": "seldon",
             "inputs": [{"name": "input", "datatype": "INT64", "shape": [1, 2]}],
             "outputs": [{"name": "output", "datatype": "INT64", "shape": [1, 2]}],
-            "custom": {"model": os.environ.get("MODEL_GCS_LOCATION")},
+            "custom": {"model": "MYMODEL"},
         }

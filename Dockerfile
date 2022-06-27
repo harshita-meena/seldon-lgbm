@@ -35,19 +35,23 @@ RUN apt-get remove -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip && \
-    pip3 install seldon-core==v1.13.1 google-cloud-storage==1.36.0 werkzeug==2.0.3 joblib==1.1.0 lightgbm numpy
+    pip3 install seldon-core google-cloud-storage==1.36.0 werkzeug==2.0.3 joblib==1.1.0 lightgbm numpy opentracing opentracing-instrumentation
 
 WORKDIR /app
 
+COPY seldon-core/python/seldon_core/ /usr/local/lib/python3.7/dist-packages/seldon_core/
 COPY MyModel.py /app
 COPY lgb.pkl /app
 COPY run_seldon.sh /app
 COPY ServeSeldon.py /app
 
 ENV SELDON_ENTRYPOINT ServeSeldon
-ENV MODEL_NAME MyModel
+ENV MODEL_NAME MyModel 
 ENV SERVICE_TYPE MODEL
 ENV PERSISTENCE 0
+ENV TRACING 1
+ENV JAEGER_AGENT_HOST localhost
+ENV JAEGER_AGENT_PORT 6831
 
 RUN chmod 755 /app/run_seldon.sh
 
