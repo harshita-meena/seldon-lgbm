@@ -39,7 +39,9 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
         t0 = time.time()
 
         # Call predict from super class (ie. Application Logic layer )
-        output = super().predict(X, feature_names)
+        with self.tracing.tracer.start_span('Calling-mymodel-predict', child_of=get_current_span()) as span:
+           with span_in_context(span):
+              output = super().predict(X, feature_names)
 
         self.request_duration_ms = (time.time() - t0) * 1000
         return output
@@ -49,7 +51,7 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
 
         t0 = time.time()
         # Call predict from super class (ie. Application Logic layer )
-        with self.tracing.tracer.start_span('Calling-mymodel', child_of=get_current_span()) as span:
+        with self.tracing.tracer.start_span('Calling-mymodel-predictraw', child_of=get_current_span()) as span:
            with span_in_context(span):
               output = super().predict_raw(msg)
         self.request_duration_ms = (time.time() - t0) * 1000
@@ -91,5 +93,5 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
         return self.metadata()
 
     def set_tracer(self, tracing) -> Dict:
-       self.tracing = tracing
-       logger.info("Tracing object init inside ServeSeldon.")
+        self.tracing = tracing
+        logger.info("Tracing object init inside ServeSeldon.")

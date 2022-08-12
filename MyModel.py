@@ -26,7 +26,7 @@ class MyModel:
         """
         self.model = joblib.load(f"/app/lgb.pkl")
 
-    def predict_raw(self, request, feature_names = None) -> np.ndarray:
+    def predict(self, X, feature_names = None) -> np.ndarray:
         """
         Return a prediction.
 
@@ -35,28 +35,8 @@ class MyModel:
         request: array-like
         feature_names : array of feature names (optional)
         """
-        if isinstance(request, dict) and "data" in request:
-            output = self.model.predict(request["data"]["ndarray"], predict_disable_shape_check=True)
-            return {"data": array_to_rest_datadef("ndarray", output)}
-        elif isinstance(request, prediction_pb2.SeldonMessage):
-            data = get_data_from_proto(request)
-            output = self.model.predict(data, predict_disable_shape_check=True)
-            return prediction_pb2.SeldonMessage(data=array_to_grpc_datadef("ndarray", output))
-        else:
-            raise RuntimeError("Received unexpected request format.")
-
-    def handle_request_grpc(
-        self, request: prediction_pb2.SeldonMessage
-    ) -> prediction_pb2.SeldonMessage:
-        data = json_format.MessageToDict(request.jsonData)
-        embedding = data["embedding"]
-        num_neighbors = int(data["num_neighbors"])
-        distances, indices = self.loaded_index.search(
-            np.array([np.array(embedding).astype(np.float32)]), num_neighbors
-        )
-        return prediction_pb2.SeldonMessage(
-            data=array_to_grpc_datadef("ndarray", indices[0])
-        )
+        output = self.model.predict(X, predict_disable_shape_check=True)
+        return output
 
     def metadata(self) -> Dict:
         return {
