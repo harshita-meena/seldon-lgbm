@@ -21,6 +21,7 @@ RUN apt-get update && \
     git \
     gnupg \
     bash \
+    vim \
     procps && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -52,6 +53,7 @@ ENV PERSISTENCE 0
 ENV TRACING 1
 ENV JAEGER_AGENT_HOST localhost
 ENV JAEGER_AGENT_PORT 6831
+ENV SELDON_DEBUG 1
 
 RUN chmod 755 /app/run_seldon.sh
 

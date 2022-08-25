@@ -8,7 +8,7 @@ import logging
 from seldon_core.user_model import SeldonComponent
 from seldon_core.proto import prediction_pb2
 from seldon_core.utils import construct_response_json, get_meta_from_proto
-from opentracing_instrumentation.request_context import get_current_span, span_in_context
+from opentracing_instrumentation.request_context import span_in_context, get_current_span
 from google.protobuf import json_format
 
 # Dynamically import class name
@@ -39,7 +39,8 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
         t0 = time.time()
 
         # Call predict from super class (ie. Application Logic layer )
-        with self.tracing.tracer.start_span('Calling-mymodel-predict', child_of=get_current_span()) as span:
+        logger.info(get_current_span())
+        with self.tracer.start_span('Calling-mymodel-predict', child_of=get_current_span()) as span:
            with span_in_context(span):
               output = super().predict(X, feature_names)
 
@@ -51,7 +52,7 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
 
         t0 = time.time()
         # Call predict from super class (ie. Application Logic layer )
-        with self.tracing.tracer.start_span('Calling-mymodel-predictraw', child_of=get_current_span()) as span:
+        with self.tracer.start_span('Calling-mymodel-predictraw', child_of=get_current_span()) as span:
            with span_in_context(span):
               output = super().predict_raw(msg)
         self.request_duration_ms = (time.time() - t0) * 1000
@@ -91,7 +92,3 @@ class ServeSeldon(ApplicationLogic, SeldonComponent):
 
     def init_metadata(self) -> Dict:
         return self.metadata()
-
-    def set_tracer(self, tracing) -> Dict:
-        self.tracing = tracing
-        logger.info("Tracing object init inside ServeSeldon.")
